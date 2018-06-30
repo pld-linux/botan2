@@ -1,7 +1,8 @@
+# TODO: fix sphinx docs build (sphinx-build hangs?)
 #
 # Conditional build:
 %bcond_without	tests		# unit tests
-%bcond_without	apidocs		# Sphinx based HTML documentation
+%bcond_with	apidocs		# Sphinx based HTML documentation [hangs, FIXME]
 %bcond_without	static_libs	# static library
 %bcond_without	python		# Python bindings
 %bcond_without	python2		# CPython 2.x binding
@@ -13,32 +14,27 @@
 %endif
 Summary:	Crypto library written in C++
 Summary(pl.UTF-8):	Biblioteka kryptograficzna napisana w C++
-Name:		botan
-Version:	1.10.17
+Name:		botan2
+Version:	2.6.0
 Release:	1
 License:	BSD
 Group:		Libraries
 Source0:	https://botan.randombit.net/releases/Botan-%{version}.tgz
-# Source0-md5:	e5ed5dc70edd238c5a2116670b2cb3f3
-Patch0:		%{name}-includes.patch
-Patch1:		%{name}-python.patch
+# Source0-md5:	8967f4951310e3548e3875d3c1501a16
 URL:		https://botan.randombit.net/
 BuildRequires:	bzip2-devel
-BuildRequires:	gmp-devel
 BuildRequires:	libstdc++-devel
 BuildRequires:	openssl-devel
-BuildRequires:	python >= 1:2.6
+BuildRequires:	python >= 1:2.7
 BuildRequires:	rpm-pythonprov
 BuildRequires:	rpmbuild(macros) >= 1.714
 %{?with_apidocs:BuildRequires:	sphinx-pdg}
 BuildRequires:	zlib-devel
 %if %{with python2}
-BuildRequires:	boost-python-devel
-BuildRequires:	python-devel >= 1:2.6
+BuildRequires:	python-devel >= 1:2.7
 %endif
 %if %{with python3}
-BuildRequires:	boost-python3-devel
-BuildRequires:	python3-devel >= 1:3.2
+BuildRequires:	python3-devel >= 1:3.4
 %endif
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -128,12 +124,13 @@ Wiązanie Pythona 3.x do biblioteki Botan.
 
 %prep
 %setup -q -n Botan-%{version}
-%patch0 -p1
-%patch1 -p1
+
+# kill shebang, nothing to execute directly
+%{__sed} -i -e '1d' src/python/botan2.py
 
 %build
 # we have the necessary prerequisites, so enable optional modules
-%define enable_modules gnump,bzip2,zlib,openssl
+%define enable_modules bzip2,lzma,zlib,openssl,sqlite3,tpm,pkcs11
 
 # fixme: maybe disable unix_procs, very slow.
 %define disable_modules %{nil}
@@ -146,48 +143,22 @@ Wiązanie Pythona 3.x do biblioteki Botan.
 	--cpu=%{_arch} \
 	--enable-modules=%{enable_modules} \
 	--disable-modules=%{disable_modules} \
-%if %{with python}
-	--with-boost-python \
-	--with-python-version=x.y \
+%if %{with python2}
+	--with-python-version=%{py_ver} \
 %endif
-	%{?with_apidocs:--with-sphinx}
+	%{!?with_apidocs:--without-sphinx}
 
 # (ab)using CXX as an easy way to inject our CXXFLAGS
 %{__make} \
-	CXX="%{__cxx} %{rpmcxxflags}"
+	CXX="%{__cxx} -pthread" \
+	CXXFLAGS="%{rpmcxxflags}"
 
 %if %{with apidocs}
 %{__make} docs
 %endif
 
 %if %{with tests}
-%{__make} check \
-	CXX="%{__cxx} %{rpmcxxflags}"
-
-LD_LIBRARY_PATH=. ./check --validate
-%endif
-
-%if %{with python2}
-install -d build/python%{py_ver}
-%{__make} -f Makefile.python \
-	CXX="%{__cxx}" \
-	CFLAGS="%{rpmcxxflags}" \
-	LDFLAGS="%{rpmldflags}" \
-	PY_VER=%{py_ver} \
-	PYTHON_ROOT=%{py_libdir}/config \
-	PYTHON_INC=-I%{py_incdir}
-%endif
-
-%if %{with python3}
-install -d build/python%{py3_ver}
-%{__make} -f Makefile.python \
-	CXX="%{__cxx}" \
-	CFLAGS="%{rpmcxxflags}" \
-	LDFLAGS="%{rpmldflags}" \
-	BOOST_PYTHON=boost_python3 \
-	PY_VER=%{py3_ver} \
-	PYTHON_ROOT=%{py3_libdir}/config \
-	PYTHON_INC=-I%{py3_incdir}
+LD_LIBRARY_PATH=. ./botan-test
 %endif
 
 %install
@@ -196,27 +167,23 @@ rm -rf $RPM_BUILD_ROOT
 %{__make} install \
 	INSTALL_CMD_EXEC="install -p -m 755" \
 	INSTALL_CMD_DATA="install -p -m 644" \
-	DOCDIR=_doc \
-	DESTDIR=$RPM_BUILD_ROOT%{_prefix}
+	DESTDIR=$RPM_BUILD_ROOT
 
 %if %{with python2}
-%{__make} -f Makefile.python install \
-	PY_VER=%{py_ver} \
-	PYTHON_SITE_PACKAGE_DIR=$RPM_BUILD_ROOT%{py_sitedir}
-
 %py_comp $RPM_BUILD_ROOT%{py_sitedir}
 %py_ocomp $RPM_BUILD_ROOT%{py_sitedir}
 %py_postclean
 %endif
 
 %if %{with python3}
-%{__make} -f Makefile.python install \
-	PY_VER=%{py3_ver} \
-	PYTHON_SITE_PACKAGE_DIR=$RPM_BUILD_ROOT%{py3_sitedir}
-
+install -d $RPM_BUILD_ROOT%{py3_sitedir}
+cp -p src/python/botan2.py $RPM_BUILD_ROOT%{py3_sitedir}
 %py3_comp $RPM_BUILD_ROOT%{py3_sitedir}
 %py3_ocomp $RPM_BUILD_ROOT%{py3_sitedir}
 %endif
+
+# packaged as %doc
+%{__rm} -r $RPM_BUILD_ROOT%{_docdir}/botan-%{version}
 
 %if %{with apidocs}
 install -d $RPM_BUILD_ROOT%{_examplesdir}
@@ -231,26 +198,28 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
-%doc readme.txt doc/{algos,credits,faq,index,license,log,support,users}.txt
-%attr(755,root,root) %{_libdir}/libbotan-1.10.so.*.*
-%attr(755,root,root) %ghost %{_libdir}/libbotan-1.10.so.1
+%doc license.txt news.rst readme.rst doc/{authors.txt,credits.rst,reading_list.txt,roadmap.rst,security.rst,todo.rst}
+%attr(755,root,root) %{_bindir}/botan
+%attr(755,root,root) %{_libdir}/libbotan-2.so.*.*
+%attr(755,root,root) %ghost %{_libdir}/libbotan-2.so.5
+%{_mandir}/man1/botan.1*
 
 %files devel
 %defattr(644,root,root,755)
-%attr(755,root,root) %{_bindir}/botan-config-1.10
-%attr(755,root,root) %{_libdir}/libbotan-1.10.so
-%{_includedir}/botan-1.10
-%{_pkgconfigdir}/botan-1.10.pc
+%attr(755,root,root) %{_libdir}/libbotan-2.so
+%{_includedir}/botan-2
+%{_pkgconfigdir}/botan-2.pc
 
 %if %{with static_libs}
 %files static
 %defattr(644,root,root,755)
-%{_libdir}/libbotan-1.10.a
+%{_libdir}/libbotan-2.a
 %endif
 
 %if %{with apidocs}
 %files apidocs
 %defattr(644,root,root,755)
+# FIXME: update path after fixing sphinx build
 %doc _doc/manual/{_static,*.html,*.js}
 %{_examplesdir}/%{name}-%{version}
 %endif
@@ -258,16 +227,12 @@ rm -rf $RPM_BUILD_ROOT
 %if %{with python2}
 %files -n python-botan
 %defattr(644,root,root,755)
-%dir %{py_sitedir}/botan
-%attr(755,root,root) %{py_sitedir}/botan/_botan.so
-%{py_sitedir}/botan/__init__.py[co]
+%{py_sitedir}/botan2.py[co]
 %endif
 
 %if %{with python3}
 %files -n python3-botan
 %defattr(644,root,root,755)
-%dir %{py3_sitedir}/botan
-%attr(755,root,root) %{py3_sitedir}/botan/_botan.so
-%{py3_sitedir}/botan/__init__.py
-%{py3_sitedir}/botan/__pycache__
+%{py3_sitedir}/botan2.py
+%{py3_sitedir}/__pycache__/botan2.cpython-*.py[co]
 %endif

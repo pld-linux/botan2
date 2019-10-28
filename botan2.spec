@@ -16,7 +16,7 @@ Summary:	Crypto library written in C++
 Summary(pl.UTF-8):	Biblioteka kryptograficzna napisana w C++
 Name:		botan2
 Version:	2.7.0
-Release:	2
+Release:	3
 License:	BSD
 Group:		Libraries
 Source0:	https://botan.randombit.net/releases/Botan-%{version}.tgz

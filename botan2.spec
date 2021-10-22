@@ -7,6 +7,7 @@
 %bcond_without	python		# Python bindings
 %bcond_without	python2		# CPython 2.x binding
 %bcond_without	python3		# CPython 3.x binding
+%bcond_with	openssl		# OpenSSL provider
 
 %if %{without python}
 %undefine	with_python2
@@ -16,7 +17,7 @@ Summary:	Crypto library written in C++
 Summary(pl.UTF-8):	Biblioteka kryptograficzna napisana w C++
 Name:		botan2
 Version:	2.18.1
-Release:	0.1
+Release:	1
 License:	BSD
 Group:		Libraries
 Source0:	https://botan.randombit.net/releases/Botan-%{version}.tar.xz
@@ -24,7 +25,7 @@ Source0:	https://botan.randombit.net/releases/Botan-%{version}.tar.xz
 URL:		https://botan.randombit.net/
 BuildRequires:	bzip2-devel
 BuildRequires:	libstdc++-devel
-BuildRequires:	openssl-devel
+%{?with_openssl:BuildRequires:	openssl-devel}
 BuildRequires:	python >= 1:2.7
 BuildRequires:	rpm-pythonprov
 BuildRequires:	rpmbuild(macros) >= 1.714
@@ -61,7 +62,7 @@ Group:		Development/Libraries
 Requires:	%{name} = %{version}-%{release}
 Requires:	bzip2-devel
 Requires:	gmp-devel
-Requires:	openssl-devel
+%{?with_openssl:Requires:	openssl-devel}
 Requires:	zlib-devel
 
 %description devel
@@ -128,7 +129,7 @@ Wiązanie Pythona 3.x do biblioteki Botan.
 
 %build
 # we have the necessary prerequisites, so enable optional modules
-%define enable_modules bzip2,lzma,zlib,openssl,sqlite3,tpm,pkcs11
+%define enable_modules bzip2,lzma,zlib,%{?with_openssl:openssl},sqlite3,tpm,pkcs11
 
 # fixme: maybe disable unix_procs, very slow.
 %define disable_modules %{nil}
@@ -156,7 +157,8 @@ Wiązanie Pythona 3.x do biblioteki Botan.
 %endif
 
 %if %{with tests}
-LD_LIBRARY_PATH=. ./botan-test
+# certstor_system test is trying tp look up expired certs
+LD_LIBRARY_PATH=. ./botan-test --skip-tests=certstor_system
 %endif
 
 %install
@@ -199,7 +201,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc license.txt news.rst readme.rst doc/{authors.txt,credits.rst,security.rst}
 %attr(755,root,root) %{_bindir}/botan
 %attr(755,root,root) %{_libdir}/libbotan-2.so.*.*
-%attr(755,root,root) %ghost %{_libdir}/libbotan-2.so.17
+%attr(755,root,root) %ghost %{_libdir}/libbotan-2.so.18
 %{_mandir}/man1/botan.1*
 
 %files devel

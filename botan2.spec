@@ -16,12 +16,12 @@
 Summary:	Crypto library written in C++
 Summary(pl.UTF-8):	Biblioteka kryptograficzna napisana w C++
 Name:		botan2
-Version:	2.18.1
+Version:	2.19.1
 Release:	1
 License:	BSD
 Group:		Libraries
 Source0:	https://botan.randombit.net/releases/Botan-%{version}.tar.xz
-# Source0-md5:	77c558179f276273e0bf39ef941d36c5
+# Source0-md5:	30a71dd700d69561483fb1599a13ea3b
 URL:		https://botan.randombit.net/
 BuildRequires:	bzip2-devel
 BuildRequires:	docutils
@@ -206,7 +206,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc license.txt news.rst readme.rst doc/{authors.txt,credits.rst,security.rst}
 %attr(755,root,root) %{_bindir}/botan
 %attr(755,root,root) %{_libdir}/libbotan-2.so.*.*
-%attr(755,root,root) %ghost %{_libdir}/libbotan-2.so.18
+%attr(755,root,root) %ghost %{_libdir}/libbotan-2.so.19
 %{_mandir}/man1/botan.1*
 
 %files devel

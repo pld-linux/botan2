@@ -28,6 +28,7 @@ BuildRequires:	docutils
 BuildRequires:	libstdc++-devel
 %{?with_openssl:BuildRequires:	openssl-devel}
 BuildRequires:	python >= 1:2.7
+BuildRequires:	rpm-build >= 4.6
 BuildRequires:	rpm-pythonprov
 BuildRequires:	rpmbuild(macros) >= 1.714
 %{?with_apidocs:BuildRequires:	sphinx-pdg}

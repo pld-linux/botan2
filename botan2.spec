@@ -24,6 +24,7 @@ Source0:	https://botan.randombit.net/releases/Botan-%{version}.tar.xz
 # Source0-md5:	77c558179f276273e0bf39ef941d36c5
 URL:		https://botan.randombit.net/
 BuildRequires:	bzip2-devel
+BuildRequires:	docutils
 BuildRequires:	libstdc++-devel
 %{?with_openssl:BuildRequires:	openssl-devel}
 BuildRequires:	python >= 1:2.7

@@ -38,9 +38,11 @@ BuildRequires:	xz-devel
 BuildRequires:	zlib-devel
 %if %{with python2}
 BuildRequires:	python-devel >= 1:2.7
+BuildRequires:	python-modules
 %endif
 %if %{with python3}
 BuildRequires:	python3-devel >= 1:3.4
+BuildRequires:	python3-modules
 %endif
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 

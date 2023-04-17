@@ -34,6 +34,7 @@ BuildRequires:	rpmbuild(macros) >= 1.714
 %{?with_apidocs:BuildRequires:	sphinx-pdg}
 BuildRequires:	tar >= 1:1.22
 BuildRequires:	xz
+BuildRequires:	xz-devel
 BuildRequires:	zlib-devel
 %if %{with python2}
 BuildRequires:	python-devel >= 1:2.7

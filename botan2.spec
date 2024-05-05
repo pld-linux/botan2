@@ -145,9 +145,15 @@ Wiązanie Pythona 3.x do biblioteki Botan.
 	--prefix=%{_prefix} \
 	--libdir=%{_lib} \
 	--cc=gcc \
+	--cc-bin="%{__cxx}" \
+	--extra-cxxflags="%{rpmcppflags} %{rpmcxxflags}" \
+	--ldflags="%{rpmldflags}" \
 	--os=linux \
 	--cpu=%{_arch} \
+	--system-cert-bundle=/etc/certs/ca-certificates.crt \
 	%{!?with_static_libs:--disable-static-library} \
+	--no-optimizations \
+	--distribution-info="%distribution" \
 	--enable-modules=%{enable_modules} \
 	--disable-modules=%{disable_modules} \
 %if %{with python2}
@@ -155,10 +161,7 @@ Wiązanie Pythona 3.x do biblioteki Botan.
 %endif
 	%{!?with_apidocs:--without-sphinx}
 
-# (ab)using CXX as an easy way to inject our CXXFLAGS
-%{__make} \
-	CXX="%{__cxx} -pthread" \
-	CXXFLAGS="%{rpmcxxflags}"
+%{__make}
 
 %if %{with apidocs}
 %{__make} docs
@@ -174,8 +177,6 @@ LD_LIBRARY_PATH=. ./botan-test --skip-tests=certstor_system,os_utils
 rm -rf $RPM_BUILD_ROOT
 
 %{__make} install \
-	INSTALL_CMD_EXEC="install -p -m 755" \
-	INSTALL_CMD_DATA="install -p -m 644" \
 	DESTDIR=$RPM_BUILD_ROOT
 
 %if %{with python2}

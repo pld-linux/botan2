@@ -147,6 +147,7 @@ Wiązanie Pythona 3.x do biblioteki Botan.
 	--cc=gcc \
 	--os=linux \
 	--cpu=%{_arch} \
+	%{!?with_static_libs:--disable-static-library} \
 	--enable-modules=%{enable_modules} \
 	--disable-modules=%{disable_modules} \
 %if %{with python2}

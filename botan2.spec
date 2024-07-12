@@ -33,6 +33,7 @@ BuildRequires:	rpm-pythonprov
 BuildRequires:	rpmbuild(macros) >= 1.714
 %{?with_apidocs:BuildRequires:	sphinx-pdg}
 BuildRequires:	tar >= 1:1.22
+BuildRequires:	trousers-devel
 BuildRequires:	xz
 BuildRequires:	xz-devel
 BuildRequires:	zlib-devel
